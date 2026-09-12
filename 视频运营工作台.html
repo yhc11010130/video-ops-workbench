@@ -107,15 +107,19 @@ const SCREENSHOT_IMPORT_QUEUE=[{
   productExposure:18,productClicks:0,bounce3s:'',status:'已发布',videoId:'7682968364239020723',duration:42,dataAsOf:'2026-09-09',
   source:'截图识别（2026-09-09）'
 }];
-/* 千川截图数据：实际数据按约定归入次日工作日志。 */
+/* 千川截图数据：当天数据记当天，不顺延日期。 */
 const AD_IMPORT_QUEUE=[{
-  id:'screenshot-qianchuan-20260910-summary',date:'2026-09-11',dataDate:'2026-09-10',account:'千川乘方',campaign:'商品自选·全部计划汇总',product:'挂面商品投放',
+  id:'screenshot-qianchuan-20260910-summary',date:'2026-09-10',dataDate:'2026-09-10',account:'千川乘方',campaign:'商品自选·全部计划汇总',product:'挂面商品投放',
   creativeData:'截图未提供单独素材明细',spend:69.31,impressions:0,clicks:0,orders:3,revenue:64.59,actualPayment:51.60,overallRevenue:86.39,refundRate:25.23,status:'投放中',
   notes:'商品自选数据；截图更新于2026-09-11 18:39；综合营销ROI 0.93，综合订单成本23.10元。',source:'截图识别（2026-09-11）'
 },{
-  id:'screenshot-qianchuan-20260911-summary',date:'2026-09-12',dataDate:'2026-09-11',account:'千川乘方',campaign:'商品自选·5条计划汇总',product:'挂面商品投放',
+  id:'screenshot-qianchuan-20260911-summary',date:'2026-09-11',dataDate:'2026-09-11',account:'千川乘方',campaign:'商品自选·5条计划汇总',product:'挂面商品投放',
   creativeData:'09:31计划共3条视频素材：素材1（ID 7684084917850161195，消耗0.04元）；一碗酸汤面.mp4（ID 7684085125857198118，消耗0.01元）；西红柿牛肉拌面.mp4（消耗0.00元）。素材成交均为0。',spend:19.12,impressions:0,clicks:0,orders:2,revenue:45.60,actualPayment:45.60,overallRevenue:45.60,refundRate:0,status:'投放中',
   notes:'商品自选数据；综合营销ROI 2.38，综合订单成本9.56元。5条计划中主要成交来自09:31计划。',source:'截图识别（2026-09-11）'
+},{
+  id:'screenshot-qianchuan-20260912-increment',date:'2026-09-12',dataDate:'2026-09-12',account:'千川乘方',campaign:'商品自选·6条计划汇总',product:'挂面商品投放',
+  creativeData:'累计共6条投放计划；09:31计划含3条视频素材。',spend:0.98,impressions:0,clicks:0,orders:3,revenue:72.60,actualPayment:60.23,overallRevenue:72.60,refundRate:0,status:'投放中',
+  notes:'根据2026-09-10至2026-09-12截图合计反算当日新增：净成交订单3单、净成交金额72.60元。三日累计净成交订单8单、净成交金额182.79元、消耗89.41元。',source:'截图识别（2026-09-12）'
 }];
 const KEY='videoOpsWorkbench_v1',CLOUD_KEY='videoOpsCloudConfig_v1',WORKSPACE_ID='main';let db=JSON.parse(localStorage.getItem(KEY)||'{"logs":[],"videos":[],"ads":[]}'),cloudClient=null,cloudUser=null,cloudBusy=false;
 if(!Array.isArray(db.logs))db.logs=[];if(!Array.isArray(db.videos))db.videos=[];if(!Array.isArray(db.ads))db.ads=[];
@@ -123,6 +127,7 @@ let importedCount=0;SCREENSHOT_IMPORT_QUEUE.forEach(item=>{let i=db.videos.findI
 let importedAdCount=0;AD_IMPORT_QUEUE.forEach(item=>{let i=db.ads.findIndex(x=>x.id===item.id);if(i<0){db.ads.push(item);importedAdCount++}else if(String(db.ads[i].source||'').startsWith('截图识别')){db.ads[i]={...db.ads[i],...item};importedAdCount++}});if(importedAdCount)localStorage.setItem(KEY,JSON.stringify(db));
 let calendarCursor=new Date(),selectedDay='';
 const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s), fmt=n=>Number(n||0).toLocaleString('zh-CN'), money=n=>Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}), esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('#adForm .field label').textContent='记录日期（当天数据当天记录）';
 function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll();if(cloudUser)cloudPush()} function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)} function dayName(d){return ['日','一','二','三','四','五','六'][new Date(d+'T00:00:00').getDay()]} function localDate(d){let y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),a=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${a}`}
 $('#today').textContent=new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())+((importedCount||importedAdCount)?` · 已从截图更新 ${importedCount} 条视频、${importedAdCount} 条千川数据`:'');
 $$('.tab').forEach(t=>t.onclick=()=>{$$('.tab,.view').forEach(x=>x.classList.remove('active'));t.classList.add('active');$('#'+t.dataset.view).classList.add('active');$('#mainAdd').textContent=t.dataset.view==='videos'?'＋ 新增视频数据':t.dataset.view==='qianchuan'?'＋ 新增千川数据':'＋ 新增工作日志'});$('#mainAdd').onclick=()=>{let v=$('.tab.active').dataset.view;v==='videos'?openVideo():v==='qianchuan'?openAd():openLog()};
